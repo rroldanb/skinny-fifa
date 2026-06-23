@@ -1,0 +1,17 @@
+somos un grupo de 3 amios que nos juuntamos semanalmente a jugar fifa y otorgamos 3 puntos para el campeon 2 para el 2do y 1 para el 3ro, quiero hacer una gania tipo dashboard con un panel  de ingreso de datos aparte (aunque puede ser un excel) que nos permita ver los puntos de cada uno, fecha de inicio y termino del campeonato, resultados por fecha, podemos mas adelante agregar mas datos como cantida de equipos que jugaron la fecha, equipo que representaron a cada jugador, marcadores, goleadores los que podemos inicializar en 0 para ir poblando en la medida que seguimos jugando, se aceptan ideasa!!
+
+los resultados acumulados son:
+
+										23-06
+
+	14-abr	21-abr	12-may	19-may	26-may	02-jun	16-jun	23-jun	Acumulado	Aporte
+
+Gonza	1	3	3	2	2	3	2	0	16	Prote
+
+JC	2	1	2	3	1	1	3	0	13	Promo
+
+
+
+La rotacion de los aportes es Prote-Pilsen-Promo
+
+Jorge	3	2	1	1	3	2	1	0	13	Pilsen
