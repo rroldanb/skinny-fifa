@@ -7,7 +7,7 @@ const CONFIG = {
       color: '#87e237',
       colorRgb: '135, 226, 55',
       image: '',
-      aporte: "rock'nroll 🍹",
+      aporte: "rock'nroll 🎸",
     },
     {
       id: 'jc',
