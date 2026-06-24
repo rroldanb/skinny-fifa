@@ -9,17 +9,6 @@ const DATA = {
     { date: '16-jun', ranking: ['jc', 'gonza', 'jorge'], goleador: null, goles: null },
     { date: '23-jun', ranking: [], goleador: null, goles: null },
   ],
-
-  aportes: [
-    { date: '14-abr', player: 'gonza' },
-    { date: '21-abr', player: 'jorge' },
-    { date: '12-may', player: 'jc' },
-    { date: '19-may', player: 'gonza' },
-    { date: '26-may', player: 'jorge' },
-    { date: '02-jun', player: 'jc' },
-    { date: '16-jun', player: 'gonza' },
-    { date: '23-jun', player: 'jorge' },
-  ],
 }
 
 // ─────────────────────────────────────────────
@@ -89,18 +78,6 @@ function computeCumulativePoints(matchdays) {
   return series
 }
 
-function getNextAporte() {
-  const rot = CONFIG.aporteRotation
-  if (DATA.aportes.length === 0) return rot[0]
-
-  const last = DATA.aportes[DATA.aportes.length - 1]
-  const player = CONFIG.players.find((p) => p.id === last.player)
-  if (!player) return rot[0]
-
-  const idx = rot.indexOf(player.aporte)
-  return rot[(idx + 1) % rot.length]
-}
-
 // ─────────────────────────────────────────────
 //  Google Sheets loader (CSV)
 // ─────────────────────────────────────────────
@@ -135,6 +112,43 @@ function parseCSVtoMatchdays(csvText) {
   }
   return result
 }
+
+// ─────────────────────────────────────────────
+//  Avatars
+// ─────────────────────────────────────────────
+
+let avatarsData = null
+
+function parseCSVtoAvatars(csvText) {
+  const lines = csvText.trim().split('\n')
+  if (lines.length < 2) return {}
+  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase())
+  const result = {}
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i].split(',').map((v) => v.trim())
+    const row = Object.fromEntries(headers.map((h, idx) => [h, vals[idx] || '']))
+    if (row.jugador) result[row.jugador] = row.url || ''
+  }
+  return result
+}
+
+async function loadAvatars() {
+  if (!CONFIG.sheet.enabled || !CONFIG.sheet.urls.avatares) return
+  try {
+    const csv = await fetchCSV(CONFIG.sheet.urls.avatares)
+    avatarsData = parseCSVtoAvatars(csv)
+  } catch {
+    console.warn('No se pudieron cargar los avatares.')
+  }
+}
+
+function getAvatarUrl(id) {
+  return (avatarsData && avatarsData[id]) || null
+}
+
+// ─────────────────────────────────────────────
+//  Sheet loader
+// ─────────────────────────────────────────────
 
 async function loadFromSheet() {
   if (!CONFIG.sheet.enabled || !CONFIG.sheet.urls.fechas) return null

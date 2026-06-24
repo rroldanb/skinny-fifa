@@ -17,6 +17,10 @@ async function initData() {
     matchdays = DATA.matchdays
   }
 
+  if (CONFIG.sheet.enabled && CONFIG.sheet.urls.avatares) {
+    await loadAvatars()
+  }
+
   return matchdays
 }
 
@@ -39,22 +43,10 @@ function render(matchdays) {
 // ─────────────────────────────────────────────
 
 function getPlayerAvatar(id) {
-  const stored = localStorage.getItem('avatar_' + id)
-  if (stored) return stored
+  const fromSheet = getAvatarUrl(id)
+  if (fromSheet) return fromSheet
   const cfg = CONFIG.players.find((p) => p.id === id)
   return (cfg && cfg.image) || null
-}
-
-function saveAvatar(id, url) {
-  if (url && url.trim()) {
-    localStorage.setItem('avatar_' + id, url.trim())
-  } else {
-    localStorage.removeItem('avatar_' + id)
-  }
-}
-
-function resetAvatar(id) {
-  localStorage.removeItem('avatar_' + id)
 }
 
 function makeGoogleDriveDirect(url) {
@@ -67,12 +59,10 @@ function makeGoogleDriveDirect(url) {
 //  Avatar modal
 // ─────────────────────────────────────────────
 
-let modalPlayerId = null
-let modalReRender = null
+let onAvatarSaved = null
 
 function openAvatarEditor(playerId, onSave) {
-  modalPlayerId = playerId
-  modalReRender = onSave
+  onAvatarSaved = onSave
   const current = getPlayerAvatar(playerId)
   const playerCfg = CONFIG.players.find((p) => p.id === playerId)
 
@@ -97,9 +87,12 @@ function openAvatarEditor(playerId, onSave) {
         value="${current || ''}">
       <p class="modal-hint">📎 Google Drive: pegá el link y lo convertimos solo</p>
 
+      <div class="modal-info" id="modalInfo" style="display:none">
+        <p>✅ URL copiada al portapapeles.<br>Abrí la pestaña <strong>Avatares</strong> del sheet y pegala en la celda de <strong>${playerCfg.name}</strong>.</p>
+      </div>
+
       <div class="modal-actions">
-        <button class="modal-btn modal-btn-secondary" id="avatarReset">Usar emoji</button>
-        <button class="modal-btn modal-btn-primary" id="avatarSave">Guardar</button>
+        <button class="modal-btn modal-btn-primary" id="avatarSave">Copiar URL y guardar en Sheet</button>
       </div>
     </div>
   `
@@ -109,6 +102,7 @@ function openAvatarEditor(playerId, onSave) {
 
   const input = overlay.querySelector('#avatarInput')
   const preview = overlay.querySelector('#modalPreview')
+  const info = overlay.querySelector('#modalInfo')
 
   input.addEventListener('input', () => {
     const url = makeGoogleDriveDirect(input.value.trim())
@@ -119,17 +113,17 @@ function openAvatarEditor(playerId, onSave) {
     }
   })
 
-  overlay.querySelector('#avatarSave').addEventListener('click', () => {
+  overlay.querySelector('#avatarSave').addEventListener('click', async () => {
     const url = makeGoogleDriveDirect(input.value.trim())
-    saveAvatar(playerId, url)
-    document.body.removeChild(overlay)
-    if (modalReRender) modalReRender()
-  })
-
-  overlay.querySelector('#avatarReset').addEventListener('click', () => {
-    resetAvatar(playerId)
-    document.body.removeChild(overlay)
-    if (modalReRender) modalReRender()
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      // fallback: select the input so user can copy manually
+      input.select()
+    }
+    info.style.display = 'block'
+    overlay.querySelector('.modal-actions').style.display = 'none'
+    if (onAvatarSaved) onAvatarSaved()
   })
 
   overlay.querySelector('.modal-close').addEventListener('click', () => {
@@ -320,26 +314,49 @@ function renderResultsTable(matchdays, standings) {
 
 function renderAportes(matchdays) {
   const container = document.getElementById('aportesContainer')
+  const rot = CONFIG.aporteRotation
+  const nPlayers = CONFIG.players.length
 
-  const next = getNextAporte()
+  const aporteEnFecha = (fechaIdx, playerIdx) => {
+    const offset = CONFIG.rotationOffset || 0
+    const idx = ((fechaIdx - playerIdx + offset) % nPlayers + nPlayers) % nPlayers
+    return rot[idx]
+  }
 
-  const chips = CONFIG.players
-    .map((p) => {
-      const isNext = p.aporte === next
-      return `
-        <div class="aporte-item${isNext ? ' active' : ''}">
-          <span class="aporte-emoji">${p.emoji}</span>
-          <span class="aporte-player">${p.name}</span>
-          <span class="aporte-label">${p.aporte}</span>
-        </div>
-      `
-    })
-    .join(`<span class="aporte-divider">→</span>`)
-
-  container.innerHTML = `
-    ${chips}
-    <div class="aporte-turn">
-      Próximo aporte: <strong>${next}</strong>
-    </div>
+  let html = `
+    <div class="table-wrapper aportes-table-wrap">
+      <table class="chalk-table aportes-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            ${CONFIG.players.map(p => `<th>${p.emoji} ${p.name}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
   `
+
+  // Próxima fecha (arriba de todo, destacada)
+  const nextIdx = matchdays.length
+  html += `<tr class="aporte-next">
+    <td>Próxima</td>
+    ${CONFIG.players.map((p, pi) => `<td class="aporte-tipo">${aporteEnFecha(nextIdx, pi)}</td>`).join('')}
+  </tr>`
+
+  // Fechas jugadas (más reciente primero)
+  const reversed = [...matchdays].reverse()
+  reversed.forEach((md) => {
+    const origIdx = matchdays.indexOf(md)
+    const jugada = md.ranking && md.ranking.length > 0
+    html += `<tr class="${jugada ? '' : 'future-date'}">
+      <td>${md.date}</td>
+      ${CONFIG.players.map((p, pi) => {
+        const tipo = aporteEnFecha(origIdx, pi)
+        return `<td class="aporte-tipo">${tipo}</td>`
+      }).join('')}
+    </tr>`
+  })
+
+  html += `</tbody></table></div>`
+
+  container.innerHTML = html
 }

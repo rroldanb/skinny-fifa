@@ -7,7 +7,7 @@ const CONFIG = {
       color: '#87e237',
       colorRgb: '135, 226, 55',
       image: '',
-      aporte: 'Prote 🥩',
+      aporte: "rock'nroll 🍹",
     },
     {
       id: 'jc',
@@ -37,13 +37,14 @@ const CONFIG = {
     goalBonusEnabled: true,
   },
 
+  aporteRotation: ['Prote 🥩', 'Promo 🍹', 'Pilsen 🍺'],
+  rotationOffset: 2, // ajustar si cambia el punto de partida
+
   season: {
     name: 'Temporada 1',
     start: '14-abr',
-    end: '30-jun',
+    end: '30-jul',
   },
-
-  aporteRotation: ['Prote 🥩', 'Pilsen 🍺', 'Promo 🍹'],
 
   // ───── Google Sheets ─────
   // 1. Abrí tu sheet en https://sheets.google.com
@@ -54,7 +55,7 @@ const CONFIG = {
     enabled: true,
     urls: {
       fechas: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhHvBhRim-QaZ6zc8BMxoyS_f-j6p2giawZZDaNhQnL1fR7h0DDn2gbVUj22GPAkN2hw6UOJRdAkTg/pub?gid=1475399375&single=true&output=csv',
-      aportes: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhHvBhRim-QaZ6zc8BMxoyS_f-j6p2giawZZDaNhQnL1fR7h0DDn2gbVUj22GPAkN2hw6UOJRdAkTg/pub?gid=1400983526&single=true&output=csv',
+      avatares: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhHvBhRim-QaZ6zc8BMxoyS_f-j6p2giawZZDaNhQnL1fR7h0DDn2gbVUj22GPAkN2hw6UOJRdAkTg/pub?gid=1615759422&single=true&output=csv',
       detalles: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhHvBhRim-QaZ6zc8BMxoyS_f-j6p2giawZZDaNhQnL1fR7h0DDn2gbVUj22GPAkN2hw6UOJRdAkTg/pub?gid=1312213610&single=true&output=csv',
     },
   },
