@@ -37,7 +37,7 @@ const CONFIG = {
     goalBonusEnabled: true,
   },
 
-  aporteRotation: ['Prote 🥩', 'Promo 🍹', 'Pilsen 🍺'],
+  aporteRotation: ['Prote 🥩', 'Pilsen 🍺', 'Promo 🍹'],
   rotationOffset: 2, // ajustar si cambia el punto de partida
 
   season: {

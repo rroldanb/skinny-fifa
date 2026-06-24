@@ -160,3 +160,90 @@ async function loadFromSheet() {
     return null
   }
 }
+
+// ─────────────────────────────────────────────
+//  Detalles (per-player match data)
+// ─────────────────────────────────────────────
+
+function parseCSVtoDetalles(csvText) {
+  const lines = csvText.trim().split('\n')
+  if (lines.length < 2) return []
+  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase())
+  const colMap = { gg: 'g' }
+  const mapped = headers.map((h) => colMap[h] || h)
+
+  const byDate = {}
+
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i].split(',').map((v) => v.trim())
+    const row = Object.fromEntries(mapped.map((h, idx) => [h, vals[idx] || '']))
+    if (!row.fecha) continue
+    if (!byDate[row.fecha]) byDate[row.fecha] = { date: row.fecha, detalles: [] }
+
+    byDate[row.fecha].detalles.push({
+      player: row.jugador.trim().toLowerCase(),
+      equipo: row.equipo || '',
+      gf: parseInt(row.gf, 10) || 0,
+      gc: parseInt(row.gc, 10) || 0,
+      goleador: row.goleador || null,
+      g: row.goleador ? parseInt(row.g, 10) || null : null,
+    })
+  }
+
+  return Object.values(byDate)
+}
+
+let detallesData = null
+
+async function loadDetalles() {
+  if (!CONFIG.sheet.enabled || !CONFIG.sheet.urls.detalles) return
+  try {
+    const csv = await fetchCSV(CONFIG.sheet.urls.detalles)
+    detallesData = parseCSVtoDetalles(csv)
+  } catch {
+    console.warn('No se pudieron cargar los detalles.')
+  }
+}
+
+function mergeDetallesIntoMatchdays(matchdays) {
+  if (!detallesData) return
+  const map = Object.fromEntries(detallesData.map((d) => [d.date, d.detalles]))
+  for (const md of matchdays) {
+    if (map[md.date]) {
+      md.detalles = map[md.date]
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Player Stats (accumulated)
+// ─────────────────────────────────────────────
+
+function computePlayerStats(matchdays) {
+  const ids = getPlayerIds()
+  const stats = Object.fromEntries(ids.map((id) => [id, { totalGF: 0, totalGC: 0, goleadorCount: 0, equipos: {} }]))
+
+  for (const md of matchdays) {
+    if (!md.detalles) continue
+    for (const d of md.detalles) {
+      if (!stats[d.player]) continue
+      stats[d.player].totalGF += d.gf
+      stats[d.player].totalGC += d.gc
+      if (d.equipo) {
+        stats[d.player].equipos[d.equipo] = (stats[d.player].equipos[d.equipo] || 0) + 1
+      }
+      if (d.goleador) {
+        stats[d.player].goleadorCount++
+      }
+    }
+  }
+
+  return stats
+}
+
+function getMostUsedTeam(equipos) {
+  const entries = Object.entries(equipos)
+  if (entries.length === 0) return null
+  entries.sort((a, b) => b[1] - a[1])
+  return { team: entries[0][0], count: entries[0][1] }
+}

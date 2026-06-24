@@ -504,6 +504,30 @@ header {
   letter-spacing: 0.06em;
 }
 
+/* ── Player stats ── */
+
+.player-stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: var(--chalk-faint);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.stat.stat-dif.pos { color: #4ade80; }
+.stat.stat-dif.neg { color: #f87171; }
+.stat.stat-goleador { color: #facc15; }
+
 /* Cards animation */
 .player-card {
   opacity: 0;
@@ -747,54 +771,154 @@ header {
   font-weight: 700;
 }
 
-/* Future section */
-#future-section {
-  padding: 24px 0 48px;
+/* Partidos section */
+#partidos-section {
+  padding: 24px 0 40px;
 }
 
-.future-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+/* ── Matchday cards ── */
+
+.matchday-cards {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.future-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 28px 20px;
+.matchday-card {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
+  overflow: hidden;
   backdrop-filter: blur(12px);
-  transition: var(--transition);
-  opacity: 0.5;
 }
 
-.future-card:hover {
-  opacity: 0.7;
-  border-color: var(--chalk-dim);
+.matchday-card.future-date {
+  opacity: 0.4;
 }
 
-.future-icon {
-  font-size: 2.4rem;
+.mdc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--chalk-faint);
 }
 
-.future-label {
-  font-size: 0.95rem;
-  font-weight: 600;
+.mdc-date {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+}
+
+.mdc-podium {
+  font-size: 0.82rem;
   color: var(--text-secondary);
+  padding: 2px 10px;
+  border-radius: 100px;
+  background: var(--chalk-faint);
 }
 
-.future-badge {
+.mdc-body {
+  padding: 6px 20px;
+}
+
+.mdc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--chalk-faint);
+  gap: 8px;
+}
+
+.mdc-row:last-child {
+  border-bottom: none;
+}
+
+.mdc-header-row {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 4px 12px;
-  border-radius: 100px;
-  background: var(--chalk-faint);
   color: var(--text-muted);
+  padding: 4px 0 5px;
+}
+
+.mdc-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mdc-group-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.mdc-group-center {
+  flex-shrink: 0;
+  flex:2;
+  justify-content: center;
+}
+
+.mdc-group-right {
+  flex-shrink: 0;
+  min-width: 100px;
+  justify-content: flex-end;
+}
+
+.mdc-player {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  min-width: 85px;
+}
+
+.mdc-team {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  min-width: 80px;
+}
+
+.mdc-pts {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  min-width: 45px;
+}
+
+.mdc-gf,
+.mdc-gc {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+  text-align: center;
+}
+
+.mdc-gc {
+  color: var(--text-secondary);
+}
+
+.mdc-dg {
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+  text-align: center;
+}
+
+.mdc-dg.dg-pos { color: #4ade80; }
+.mdc-dg.dg-neg { color: #f87171; }
+
+.mdc-goleador {
+  font-size: 0.72rem;
+  color: #facc15;
+  padding: 2px 10px;
+  border-radius: 100px;
+  background: rgba(250, 204, 21, 0.1);
+  white-space: nowrap;
 }
 
 /* Footer */
@@ -911,10 +1035,6 @@ footer {
     top: -4px;
     right: 4px;
     font-size: 1.1rem;
-  }
-
-  .future-grid {
-    grid-template-columns: 1fr;
   }
 
   .section-header h2 {

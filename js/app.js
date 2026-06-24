@@ -21,16 +21,22 @@ async function initData() {
     await loadAvatars()
   }
 
+  if (CONFIG.sheet.enabled && CONFIG.sheet.urls.detalles) {
+    await loadDetalles()
+    mergeDetallesIntoMatchdays(matchdays)
+  }
+
   return matchdays
 }
 
 function render(matchdays) {
   const standings = computeStandings(matchdays)
   const cumulative = computeCumulativePoints(matchdays)
+  const playerStats = computePlayerStats(matchdays)
   const dates = matchdays.map((m) => m.date)
 
-  renderPlayerCards(standings, matchdays)
-  renderResultsTable(matchdays, standings)
+  renderPlayerCards(standings, playerStats)
+  renderMatchdayCards(matchdays)
   renderAportes(matchdays)
 
   requestAnimationFrame(() => {
@@ -139,7 +145,7 @@ function openAvatarEditor(playerId, onSave) {
 //  Player Cards
 // ─────────────────────────────────────────────
 
-function renderPlayerCards(standings, matchdays) {
+function renderPlayerCards(standings, playerStats) {
   const container = document.getElementById('playerCards')
   container.innerHTML = ''
 
@@ -158,6 +164,30 @@ function renderPlayerCards(standings, matchdays) {
       ? `<div class="player-avatar"><img src="${avatarUrl}" alt="${playerCfg.name}" onerror="this.outerHTML='<span class=\\'player-emoji\\'>${playerCfg.emoji}</span>'"></div>`
       : `<span class="player-emoji">${playerCfg.emoji}</span>`
 
+    const st = playerStats[s.id] || null
+    let statsHtml = ''
+    if (st) {
+      const dif = st.totalGF - st.totalGC
+      const difSign = dif >= 0 ? '+' : ''
+      const difClass = dif >= 0 ? 'pos' : 'neg'
+      const mostUsed = getMostUsedTeam(st.equipos)
+      const equipoHtml = mostUsed
+        ? `<span class="stat stat-equipo">🔄 ${mostUsed.team} (${mostUsed.count})</span>`
+        : ''
+
+      statsHtml = `
+        <div class="player-stats-row">
+          <span class="stat stat-gf">⚽ ${st.totalGF}</span>
+          <span class="stat stat-gc">🛡️ ${st.totalGC}</span>
+          <span class="stat stat-dif ${difClass}">± ${difSign}${dif}</span>
+        </div>
+        <div class="player-stats-row">
+          <span class="stat stat-goleador">🏆 ${st.goleadorCount}gol</span>
+          ${equipoHtml}
+        </div>
+      `
+    }
+
     card.innerHTML = `
       <button class="edit-avatar-btn" data-player="${s.id}" title="Cambiar foto">✏️</button>
       ${avatarHtml}
@@ -167,12 +197,13 @@ function renderPlayerCards(standings, matchdays) {
         <span class="player-points" data-target="${s.pts}">0</span>
         <span class="player-points-label">pts</span>
       </div>
+      ${statsHtml}
     `
 
     container.appendChild(card)
 
     card.querySelector('.edit-avatar-btn').addEventListener('click', () => {
-      openAvatarEditor(s.id, () => renderPlayerCards(standings, matchdays))
+      openAvatarEditor(s.id, () => renderPlayerCards(standings, playerStats))
     })
 
     requestAnimationFrame(() => {
@@ -215,96 +246,89 @@ function animateCounter(el, target, duration) {
 }
 
 // ─────────────────────────────────────────────
-//  Results Table
+//  Matchday Cards
 // ─────────────────────────────────────────────
 
-function renderResultsTable(matchdays, standings) {
-  const table = document.getElementById('resultsTable')
-  const thead = table.querySelector('thead')
-  const tbody = table.querySelector('tbody')
+function renderMatchdayCards(matchdays) {
+  const container = document.getElementById('matchdayCards')
+  container.innerHTML = ''
 
-  const playerIds = getPlayerIds()
-
-  // Build header
-  const headerCells = ['Fecha', '🥇', '🥈', '🥉', 'Goleador']
-  playerIds.forEach((id) => {
-    const p = CONFIG.players.find((pl) => pl.id === id)
-    headerCells.push(p ? p.name : id)
-  })
-
-  thead.innerHTML = ''
-  const headRow = document.createElement('tr')
-  headerCells.forEach((h) => {
-    const th = document.createElement('th')
-    th.textContent = h
-    headRow.appendChild(th)
-  })
-  thead.appendChild(headRow)
-
-  // Build body (most recent first)
-  tbody.innerHTML = ''
   const reversed = [...matchdays].reverse()
+  const medals = ['🥇', '🥈', '🥉']
 
   reversed.forEach((md) => {
-    const tr = document.createElement('tr')
-    if (!md.ranking || md.ranking.length === 0) {
-      tr.classList.add('future-date')
+    const hasRanking = md.ranking && md.ranking.length > 0
+    const hasDetalles = md.detalles && md.detalles.length > 0
+
+    const card = document.createElement('div')
+    card.className = 'matchday-card'
+    if (!hasRanking) card.classList.add('future-date')
+
+    let html = `<div class="mdc-header">
+      <span class="mdc-date">${md.date}</span>`
+
+    if (hasRanking) {
+      html += `<span class="mdc-podium">`
+      md.ranking.forEach((pid, i) => {
+        const p = CONFIG.players.find((pl) => pl.id === pid)
+        if (p) html += `${medals[i]} ${p.name} `
+      })
+      html += `</span>`
+    }
+    html += `</div>`
+
+    if (hasDetalles) {
+      html += `<div class="mdc-body">`
+      html += `<div class="mdc-row mdc-header-row">
+        <span class="mdc-group mdc-group-left">
+          <span class="mdc-player">Jugador</span>
+          <span class="mdc-team">Equipo</span>
+          <span class="mdc-pts">Pts</span>
+        </span>
+        <span class="mdc-group mdc-group-center">
+          <span class="mdc-gf">GF</span>
+          <span class="mdc-gc">GC</span>
+          <span class="mdc-dg">DG</span>
+        </span>
+        <span class="mdc-group mdc-group-right">
+          <span class="mdc-goleador">Goleador</span>
+        </span>
+      </div>`
+      md.detalles.forEach((d) => {
+        const p = CONFIG.players.find((pl) => pl.id === d.player)
+        if (!p) return
+
+        const pos = hasRanking ? md.ranking.indexOf(d.player) : -1
+        const pts = pos >= 0 ? getPointsForPosition(pos) : 0
+        const goalBonus = CONFIG.points.goalBonusEnabled && md.goleador === d.player
+          ? CONFIG.points.goalBonus : 0
+        const totalPts = pts + goalBonus
+        const medal = pos >= 0 ? medals[pos] : ''
+        const dg = d.gf - d.gc
+        const dgSign = dg >= 0 ? '+' : ''
+        const dgClass = dg > 0 ? 'dg-pos' : dg < 0 ? 'dg-neg' : ''
+
+        html += `<div class="mdc-row">`
+        html += `<span class="mdc-group mdc-group-left">
+          <span class="mdc-player">${p.emoji} ${p.name}</span>
+          <span class="mdc-team">${d.equipo}</span>
+          <span class="mdc-pts">${medal}${totalPts > 0 ? '+' + totalPts : ''}</span>
+        </span>`
+        html += `<span class="mdc-group mdc-group-center">
+          <span class="mdc-gf">${d.gf}</span>
+          <span class="mdc-gc">${d.gc}</span>
+          <span class="mdc-dg ${dgClass}">${dgSign}${dg}</span>
+        </span>`
+        html += `<span class="mdc-group mdc-group-right">
+          ${d.goleador ? `<span class="mdc-goleador">⭐${d.goleador} ${d.g}</span>` : ''}
+        </span>`
+        html += `</div>`
+      })
+      html += `</div>`
     }
 
-    // Date cell
-    const dateCell = document.createElement('td')
-    dateCell.textContent = md.date
-    tr.appendChild(dateCell)
-
-    // Podium cells
-    for (let i = 0; i < 3; i++) {
-      const cell = document.createElement('td')
-      const playerId = md.ranking && md.ranking[i] ? md.ranking[i] : null
-      if (playerId) {
-        const p = CONFIG.players.find((pl) => pl.id === playerId)
-        const podiumClass = `podium-${i + 1}`
-        cell.className = podiumClass + ' player-name-cell'
-        cell.textContent = p ? p.name : playerId
-      } else {
-        cell.textContent = '–'
-      }
-      tr.appendChild(cell)
-    }
-
-    // Goleador cell
-    const goleadorCell = document.createElement('td')
-    if (md.goleador) {
-      const p = CONFIG.players.find((pl) => pl.id === md.goleador)
-      goleadorCell.textContent = (p ? p.name : md.goleador) + ' ⚽'
-    } else {
-      goleadorCell.textContent = '–'
-    }
-    tr.appendChild(goleadorCell)
-
-    // Points per player
-    playerIds.forEach((id) => {
-      const cell = document.createElement('td')
-      cell.className = `pts-${id}`
-      if (md.ranking && md.ranking.length > 0) {
-        const pos = md.ranking.indexOf(id)
-        let pts = 0
-        if (pos >= 0) {
-          pts = getPointsForPosition(pos)
-          if (
-            CONFIG.points.goalBonusEnabled &&
-            md.goleador === id
-          ) {
-            pts += CONFIG.points.goalBonus
-          }
-        }
-        cell.textContent = pts
-      } else {
-        cell.textContent = '–'
-      }
-      tr.appendChild(cell)
-    })
-
-    tbody.appendChild(tr)
+    card.innerHTML = html
+    container.appendChild(card)
   })
 }
 
