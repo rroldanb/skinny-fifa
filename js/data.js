@@ -247,3 +247,42 @@ function getMostUsedTeam(equipos) {
   entries.sort((a, b) => b[1] - a[1])
   return { team: entries[0][0], count: entries[0][1] }
 }
+// ────────────────────────────────────────────────────
+//  Aportes (contributions rotation from Google Sheets)
+// ────────────────────────────────────────────────────
+let aportesData = null
+
+function parseCSVtoAportes(csvText) {
+  const lines = csvText.trim().split('\n')
+  if (lines.length < 1) return null
+  const vals = lines[0].split(',').map((v) => v.trim())
+  if (vals.length < 2) return null
+  return {
+    rotationOffset: parseInt(vals[0], 10) || 0,
+    aporteRotation: vals.slice(1),
+  }
+}
+
+async function loadAportes() {
+  if (!CONFIG.sheet.enabled || !CONFIG.sheet.urls.aportes) return
+  try {
+    const csv = await fetchCSV(CONFIG.sheet.urls.aportes)
+    aportesData = parseCSVtoAportes(csv)
+  } catch {
+    console.warn('No se pudieron cargar los aportes.')
+  }
+}
+
+function getAportes() {
+  if (aportesData) {
+    return {
+      aporteRotation: aportesData.aporteRotation,
+      rotationOffset: aportesData.rotationOffset,
+    }
+  }
+  return {
+    aporteRotation: CONFIG.aporteRotation,
+    rotationOffset: CONFIG.rotationOffset,
+  }
+}
+

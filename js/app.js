@@ -26,6 +26,9 @@ async function initData() {
     mergeDetallesIntoMatchdays(matchdays)
   }
 
+  if (CONFIG.sheet.enabled && CONFIG.sheet.urls.aportes) {
+    await loadAportes()
+  }
   return matchdays
 }
 
@@ -338,11 +341,14 @@ function renderMatchdayCards(matchdays) {
 
 function renderAportes(matchdays) {
   const container = document.getElementById('aportesContainer')
-  const rot = CONFIG.aporteRotation
+  // const rot = CONFIG.aporteRotation
+  // const nPlayers = CONFIG.players.length
+  const { aporteRotation: rot, rotationOffset } = getAportes()
   const nPlayers = CONFIG.players.length
 
   const aporteEnFecha = (fechaIdx, playerIdx) => {
-    const offset = CONFIG.rotationOffset || 0
+    // const offset = CONFIG.rotationOffset || 0
+    const offset = rotationOffset || 0
     const idx = ((fechaIdx - playerIdx + offset) % nPlayers + nPlayers) % nPlayers
     return rot[idx]
   }

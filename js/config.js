@@ -38,7 +38,7 @@ const CONFIG = {
   },
 
   aporteRotation: ['Prote 🥩', 'Pilsen 🍺', 'Promo 🍹'],
-  rotationOffset: 2, // ajustar si cambia el punto de partida
+  rotationOffset: 1, // ajustar si cambia el punto de partida
 
   season: {
     name: 'Temporada 1',
@@ -57,6 +57,7 @@ const CONFIG = {
       fechas: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhHvBhRim-QaZ6zc8BMxoyS_f-j6p2giawZZDaNhQnL1fR7h0DDn2gbVUj22GPAkN2hw6UOJRdAkTg/pub?gid=1475399375&single=true&output=csv',
       avatares: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhHvBhRim-QaZ6zc8BMxoyS_f-j6p2giawZZDaNhQnL1fR7h0DDn2gbVUj22GPAkN2hw6UOJRdAkTg/pub?gid=1615759422&single=true&output=csv',
       detalles: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhHvBhRim-QaZ6zc8BMxoyS_f-j6p2giawZZDaNhQnL1fR7h0DDn2gbVUj22GPAkN2hw6UOJRdAkTg/pub?gid=1312213610&single=true&output=csv',
+      aportes: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQhHvBhRim-QaZ6zc8BMxoyS_f-j6p2giawZZDaNhQnL1fR7h0DDn2gbVUj22GPAkN2hw6UOJRdAkTg/pub?gid=1400983526&single=true&output=csv'
     },
   },
 }
